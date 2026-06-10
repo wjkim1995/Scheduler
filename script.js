@@ -3,9 +3,17 @@ let goals = JSON.parse(localStorage.getItem("goals")) || [];
 let memo = localStorage.getItem("memo") || "";
 
 let currentDate = new Date();
-const today = new Date();
+let expandedDates = new Set();
 
 const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+const categoryColors = {
+  work: "#4f8dff",
+  daily: "#ff7a45",
+  health: "#4caf50",
+  study: "#8b5cf6",
+  etc: "#ffb300"
+};
 
 function saveData() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -71,14 +79,15 @@ function renderCalendar() {
     const total = dayTasks.length;
     const percent = total === 0 ? 0 : Math.round((done / total) * 100);
 
-    const realToday = new Date();
+    const now = new Date();
     const isToday =
-      year === realToday.getFullYear() &&
-      month === realToday.getMonth() &&
-      day === realToday.getDate();
+      year === now.getFullYear() &&
+      month === now.getMonth() &&
+      day === now.getDate();
 
-    const visibleTasks = dayTasks.slice(0, 4);
-    const hiddenCount = dayTasks.length - visibleTasks.length;
+    const isExpanded = expandedDates.has(dateText);
+    const visibleTasks = isExpanded ? dayTasks : dayTasks.slice(0, 4);
+    const hiddenCount = dayTasks.length - 4;
 
     calendar.innerHTML += `
       <div class="day ${isToday ? "today" : ""}" onclick="selectDate('${dateText}')">
@@ -92,19 +101,32 @@ function renderCalendar() {
         </div>
 
         <div class="task-list">
-          ${visibleTasks.map(task => `
-            <label class="task-item ${task.category} ${task.done ? "done" : ""}" onclick="event.stopPropagation()">
-              <input 
-                type="checkbox" 
-                ${task.done ? "checked" : ""}
-                onchange="toggleTask(${task.id})"
-              />
-              <i class="task-dot"></i>
-              <span>${task.text}</span>
-            </label>
-          `).join("")}
+          ${visibleTasks.map(task => {
+            const category = task.category || "etc";
+            const color = task.done ? "#999" : categoryColors[category];
 
-          ${hiddenCount > 0 ? `<div class="more">+${hiddenCount} more</div>` : ""}
+            return `
+              <label class="task-item ${category} ${task.done ? "done" : ""}" onclick="event.stopPropagation()">
+                <input 
+                  type="checkbox" 
+                  ${task.done ? "checked" : ""}
+                  onchange="toggleTask(${task.id})"
+                />
+                <i class="task-dot" style="background:${color};"></i>
+                <span style="color:${color}; font-weight:700;">
+                  ${task.text}
+                </span>
+              </label>
+            `;
+          }).join("")}
+
+          ${
+            hiddenCount > 0
+              ? `<div class="more" onclick="toggleMore(event, '${dateText}')">
+                  ${isExpanded ? "접기" : `+${hiddenCount} more`}
+                </div>`
+              : ""
+          }
         </div>
       </div>
     `;
@@ -113,6 +135,18 @@ function renderCalendar() {
   renderDashboard();
   renderGoals();
   renderToday();
+}
+
+function toggleMore(event, dateText) {
+  event.stopPropagation();
+
+  if (expandedDates.has(dateText)) {
+    expandedDates.delete(dateText);
+  } else {
+    expandedDates.add(dateText);
+  }
+
+  renderCalendar();
 }
 
 function selectDate(dateText) {
@@ -190,12 +224,19 @@ function renderToday() {
     return;
   }
 
-  todayList.innerHTML = todayTasks.map(task => `
-    <li>
-      <span>${task.done ? "✅" : "⬜"}</span>
-      <span>${task.text}</span>
-    </li>
-  `).join("");
+  todayList.innerHTML = todayTasks.map(task => {
+    const category = task.category || "etc";
+    const color = task.done ? "#999" : categoryColors[category];
+
+    return `
+      <li>
+        <span>${task.done ? "✅" : "⬜"}</span>
+        <span style="color:${color}; font-weight:700;">
+          ${task.text}
+        </span>
+      </li>
+    `;
+  }).join("");
 }
 
 function addGoal() {
