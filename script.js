@@ -18,10 +18,33 @@ function formatDate(year, month, day) {
 }
 
 function getTodayText() {
-  return formatDate(today.getFullYear(), today.getMonth(), today.getDate());
+  const now = new Date();
+  return formatDate(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function rolloverUndoneTasks() {
+  const todayText = getTodayText();
+  const lastRolloverDate = localStorage.getItem("lastRolloverDate");
+
+  if (lastRolloverDate === todayText) return;
+
+  tasks = tasks.map(task => {
+    if (!task.done && task.date < todayText) {
+      return {
+        ...task,
+        date: todayText
+      };
+    }
+    return task;
+  });
+
+  localStorage.setItem("lastRolloverDate", todayText);
+  saveData();
 }
 
 function renderCalendar() {
+  rolloverUndoneTasks();
+
   const calendar = document.getElementById("calendar");
   const monthTitle = document.getElementById("monthTitle");
 
@@ -48,10 +71,11 @@ function renderCalendar() {
     const total = dayTasks.length;
     const percent = total === 0 ? 0 : Math.round((done / total) * 100);
 
+    const realToday = new Date();
     const isToday =
-      year === today.getFullYear() &&
-      month === today.getMonth() &&
-      day === today.getDate();
+      year === realToday.getFullYear() &&
+      month === realToday.getMonth() &&
+      day === realToday.getDate();
 
     const visibleTasks = dayTasks.slice(0, 4);
     const hiddenCount = dayTasks.length - visibleTasks.length;
@@ -234,4 +258,10 @@ document.getElementById("memoInput").value = memo;
 
 document.getElementById("memoInput").addEventListener("input", saveData);
 
+rolloverUndoneTasks();
 renderCalendar();
+
+setInterval(() => {
+  rolloverUndoneTasks();
+  renderCalendar();
+}, 60000);
