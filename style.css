@@ -441,8 +441,13 @@ body {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
 }
 
+.more:hover {
+  color: #111;
+  text-decoration: underline;
+}
 @media (max-width: 1050px) {
   body {
     padding: 16px;
