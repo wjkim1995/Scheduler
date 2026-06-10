@@ -1,165 +1,447 @@
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let goals = JSON.parse(localStorage.getItem("goals")) || [];
-
-let currentDate = new Date();
-const today = new Date();
-
-function saveData() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("goals", JSON.stringify(goals));
+* {
+  box-sizing: border-box;
 }
 
-function formatDate(year, month, day) {
-  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+:root {
+  --bg: #f4f1ea;
+  --paper: #fffdf8;
+  --ink: #222;
+  --muted: #8a857d;
+  --line: #e5ded2;
+  --yellow: #ffd84d;
+  --green: #8bcf7a;
+  --red: #ef7777;
+  --blue: #8db8ff;
+  --shadow: 0 18px 45px rgba(38, 32, 24, 0.12);
 }
 
-function renderCalendar() {
-  const calendar = document.getElementById("calendar");
-  const monthTitle = document.getElementById("monthTitle");
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top left, #fff8d9 0, transparent 30%),
+    linear-gradient(135deg, #f6f1e8, #f7f7f7);
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: var(--ink);
+}
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+.app {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  max-width: 1380px;
+  min-height: 860px;
+  margin: auto;
+  background: rgba(255, 253, 248, 0.92);
+  border: 2px solid #222;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
 
-  monthTitle.textContent = `${year}년 ${month + 1}월`;
+.sidebar {
+  padding: 28px;
+  background: #fff8e8;
+  border-right: 2px solid var(--line);
+}
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const lastDate = new Date(year, month + 1, 0).getDate();
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+  margin-bottom: 24px;
+}
 
-  calendar.innerHTML = "";
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #111;
+  color: var(--yellow);
+  font-weight: 900;
+  font-size: 22px;
+}
 
-  for (let i = 0; i < firstDay; i++) {
-    calendar.innerHTML += `<div class="day empty"></div>`;
+.hello {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sidebar h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.side-section {
+  padding: 18px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  margin-bottom: 18px;
+}
+
+.section-title {
+  display: inline-block;
+  padding: 7px 12px;
+  margin-bottom: 14px;
+  background: #111;
+  color: white;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.today-progress {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.today-progress strong {
+  font-size: 34px;
+}
+
+.today-progress span {
+  margin-bottom: 7px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.mini-progress {
+  height: 10px;
+  background: #eee6d8;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.mini-progress div {
+  height: 100%;
+  width: 0%;
+  background: var(--yellow);
+  border-radius: 999px;
+  transition: 0.35s;
+}
+
+.today-list,
+.goal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.today-list li,
+.goal-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  border-bottom: 1px dashed #e3d7c4;
+  font-size: 14px;
+}
+
+.today-list li:last-child,
+.goal-list li:last-child {
+  border-bottom: none;
+}
+
+.goal-form {
+  display: grid;
+  grid-template-columns: 1fr 42px;
+  gap: 8px;
+}
+
+.goal-form input,
+.add-task-card input,
+.add-task-card select,
+.memo-box textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  outline: none;
+  background: white;
+}
+
+.goal-form button,
+.add-task-card button,
+.nav-btn {
+  border: none;
+  border-radius: 14px;
+  background: #111;
+  color: white;
+  cursor: pointer;
+  font-weight: 800;
+  transition: 0.2s;
+}
+
+.goal-form button:hover,
+.add-task-card button:hover,
+.nav-btn:hover {
+  transform: translateY(-2px);
+}
+
+.memo-box textarea {
+  height: 120px;
+  resize: none;
+  line-height: 1.5;
+}
+
+.main {
+  padding: 30px 34px 34px;
+}
+
+.top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+.sub-title {
+  text-align: center;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.top h1 {
+  margin: 4px 0 0;
+  font-size: 30px;
+}
+
+.nav-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.dash-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+}
+
+.dash-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.dash-card strong {
+  font-size: 32px;
+}
+
+.dash-card.point {
+  background: #fff2a8;
+}
+
+.add-task-card {
+  display: grid;
+  grid-template-columns: 1fr 160px 150px 110px;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--muted);
+  text-align: center;
+}
+
+.weekdays div {
+  padding: 10px 0;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day {
+  min-height: 132px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.day:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+.day.empty {
+  background: rgba(255,255,255,0.35);
+  cursor: default;
+}
+
+.date-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.date-num {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.day-name {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.today {
+  border: 2px solid #111;
+  background: #fff9dc;
+}
+
+.today .date-num {
+  background: var(--yellow);
+}
+
+.percent {
+  height: 7px;
+  background: #eee;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.percent-fill {
+  height: 100%;
+  background: var(--yellow);
+  width: 0%;
+  border-radius: 999px;
+  transition: 0.35s;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.task-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  flex: none;
+}
+
+.work .task-dot { background: var(--blue); }
+.daily .task-dot { background: var(--yellow); }
+.health .task-dot { background: var(--green); }
+.study .task-dot { background: #b89cff; }
+.etc .task-dot { background: var(--red); }
+
+.task-item input {
+  display: none;
+}
+
+.task-item span {
+  cursor: pointer;
+}
+
+.task-item.done span {
+  color: #999;
+  text-decoration: line-through;
+}
+
+.more {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 1050px) {
+  body {
+    padding: 16px;
   }
 
-  for (let day = 1; day <= lastDate; day++) {
-    const dateText = formatDate(year, month, day);
-    const dayTasks = tasks.filter(task => task.date === dateText);
-
-    const done = dayTasks.filter(task => task.done).length;
-    const total = dayTasks.length;
-    const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-
-    const isToday =
-      year === today.getFullYear() &&
-      month === today.getMonth() &&
-      day === today.getDate();
-
-    calendar.innerHTML += `
-      <div class="day ${isToday ? "today" : ""}" onclick="selectDate('${dateText}')">
-        <div class="date-bar">${day}</div>
-        <div class="day-content">
-          <div class="percent">
-            <div class="percent-fill" style="width:${percent}%"></div>
-          </div>
-          ${dayTasks.map(task => `
-            <label class="task-item ${task.done ? "done" : ""}" onclick="event.stopPropagation()">
-              <input 
-                type="checkbox" 
-                ${task.done ? "checked" : ""}
-                onchange="toggleTask(${task.id})"
-              />
-              <span>${task.text}</span>
-            </label>
-          `).join("")}
-        </div>
-      </div>
-    `;
+  .app {
+    grid-template-columns: 1fr;
   }
 
-  renderDashboard();
-  renderGoals();
-}
-
-function selectDate(dateText) {
-  document.getElementById("dueDate").value = dateText;
-}
-
-function addTask() {
-  const text = document.getElementById("taskInput").value.trim();
-  const date = document.getElementById("dueDate").value;
-
-  if (!text || !date) {
-    alert("할 일과 날짜를 모두 입력해주세요.");
-    return;
+  .sidebar {
+    border-right: none;
+    border-bottom: 2px solid var(--line);
   }
 
-  tasks.push({
-    id: Date.now(),
-    text,
-    date,
-    done: false
-  });
+  .dashboard,
+  .add-task-card {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-  document.getElementById("taskInput").value = "";
+  .calendar {
+    gap: 7px;
+  }
 
-  saveData();
-  renderCalendar();
+  .day {
+    min-height: 120px;
+  }
 }
 
-function toggleTask(id) {
-  tasks = tasks.map(task =>
-    task.id === id ? { ...task, done: !task.done } : task
-  );
+@media (max-width: 650px) {
+  .dashboard,
+  .add-task-card {
+    grid-template-columns: 1fr;
+  }
 
-  saveData();
-  renderCalendar();
+  .calendar {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .weekdays {
+    display: none;
+  }
 }
-
-function renderDashboard() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-
-  const monthTasks = tasks.filter(task => {
-    const taskDate = new Date(task.date);
-    return taskDate.getFullYear() === year && taskDate.getMonth() === month;
-  });
-
-  const total = monthTasks.length;
-  const done = monthTasks.filter(task => task.done).length;
-  const undone = total - done;
-  const rate = total === 0 ? 0 : Math.round((done / total) * 100);
-
-  document.getElementById("totalCount").textContent = total;
-  document.getElementById("doneCount").textContent = done;
-  document.getElementById("undoneCount").textContent = undone;
-  document.getElementById("rate").textContent = `${rate}%`;
-}
-
-function addGoal() {
-  const goalInput = document.getElementById("goalInput");
-  const text = goalInput.value.trim();
-
-  if (!text) return;
-
-  goals.push(text);
-  goalInput.value = "";
-
-  saveData();
-  renderGoals();
-}
-
-function renderGoals() {
-  const goalList = document.getElementById("goalList");
-
-  goalList.innerHTML = goals.map(goal => `
-    <li>${goal}</li>
-  `).join("");
-}
-
-function prevMonth() {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
-}
-
-function nextMonth() {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-}
-
-document.getElementById("dueDate").value = formatDate(
-  today.getFullYear(),
-  today.getMonth(),
-  today.getDate()
-);
-
-renderCalendar();
