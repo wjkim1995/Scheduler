@@ -377,11 +377,50 @@ body {
   flex: none;
 }
 
-.work .task-dot { background: var(--blue); }
-.daily .task-dot { background: var(--yellow); }
-.health .task-dot { background: var(--green); }
-.study .task-dot { background: #b89cff; }
-.etc .task-dot { background: var(--red); }
+.work .task-dot {
+  background: #4f8dff;
+}
+
+.daily .task-dot {
+  background: #ff7a45;
+}
+
+.health .task-dot {
+  background: #4caf50;
+}
+
+.study .task-dot {
+  background: #8b5cf6;
+}
+
+.etc .task-dot {
+  background: #ffb300;
+}
+
+.task-item.work span {
+  color: #4f8dff;
+  font-weight: 700;
+}
+
+.task-item.daily span {
+  color: #ff7a45;
+  font-weight: 700;
+}
+
+.task-item.health span {
+  color: #4caf50;
+  font-weight: 700;
+}
+
+.task-item.study span {
+  color: #8b5cf6;
+  font-weight: 700;
+}
+
+.task-item.etc span {
+  color: #ffb300;
+  font-weight: 700;
+}
 
 .task-item input {
   display: none;
@@ -394,6 +433,7 @@ body {
 .task-item.done span {
   color: #999;
   text-decoration: line-through;
+  font-weight: 600;
 }
 
 .more {
