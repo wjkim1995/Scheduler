@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monthly Scheduler</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="planner">
+    <aside class="sidebar">
+      <h2 id="monthTitle">2026년 6월</h2>
+
+      <div class="goal-box">
+        <div class="black-title">WEEKS GOAL</div>
+        <input id="goalInput" placeholder="이번 달 목표를 입력하세요" />
+        <button onclick="addGoal()">목표 추가</button>
+        <ul id="goalList"></ul>
+      </div>
+    </aside>
+
+    <main class="calendar-wrap">
+      <header class="top">
+        <button onclick="prevMonth()">◀</button>
+        <h1>📅 My Scheduler</h1>
+        <button onclick="nextMonth()">▶</button>
+      </header>
+
+      <section class="dashboard">
+        <div>
+          <span>Total daily completion rate</span>
+          <strong id="rate">0%</strong>
+        </div>
+        <div>
+          <span>이번달 할 일 🔥</span>
+          <strong id="totalCount">0</strong>
+        </div>
+        <div>
+          <span>완료 👍</span>
+          <strong id="doneCount">0</strong>
+        </div>
+        <div>
+          <span>미완료 😭</span>
+          <strong id="undoneCount">0</strong>
+        </div>
+      </section>
+
+      <section class="add-task">
+        <input type="text" id="taskInput" placeholder="할 일을 입력하세요" />
+        <input type="date" id="dueDate" />
+        <button onclick="addTask()">추가</button>
+      </section>
+
+      <div class="weekdays">
+        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div>
+        <div>THU</div><div>FRI</div><div>SAT</div>
+      </div>
+
+      <div id="calendar" class="calendar"></div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
