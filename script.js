@@ -50,6 +50,11 @@ function rolloverUndoneTasks() {
   saveData();
 }
 
+function getTaskColor(task) {
+  if (task.done) return "#999";
+  return categoryColors[task.category || "etc"];
+}
+
 function renderCalendar() {
   rolloverUndoneTasks();
 
@@ -87,7 +92,7 @@ function renderCalendar() {
 
     const isExpanded = expandedDates.has(dateText);
     const visibleTasks = isExpanded ? dayTasks : dayTasks.slice(0, 4);
-    const hiddenCount = dayTasks.length - 4;
+    const hiddenCount = Math.max(dayTasks.length - 4, 0);
 
     calendar.innerHTML += `
       <div class="day ${isToday ? "today" : ""}" onclick="selectDate('${dateText}')">
@@ -102,18 +107,17 @@ function renderCalendar() {
 
         <div class="task-list">
           ${visibleTasks.map(task => {
-            const category = task.category || "etc";
-            const color = task.done ? "#999" : categoryColors[category];
+            const color = getTaskColor(task);
 
             return `
-              <label class="task-item ${category} ${task.done ? "done" : ""}" onclick="event.stopPropagation()">
+              <label class="task-item" onclick="event.stopPropagation()">
                 <input 
                   type="checkbox" 
                   ${task.done ? "checked" : ""}
                   onchange="toggleTask(${task.id})"
                 />
                 <i class="task-dot" style="background:${color};"></i>
-                <span style="color:${color}; font-weight:700;">
+                <span style="color:${color}; ${task.done ? "text-decoration:line-through;" : ""}">
                   ${task.text}
                 </span>
               </label>
@@ -225,13 +229,12 @@ function renderToday() {
   }
 
   todayList.innerHTML = todayTasks.map(task => {
-    const category = task.category || "etc";
-    const color = task.done ? "#999" : categoryColors[category];
+    const color = getTaskColor(task);
 
     return `
       <li>
         <span>${task.done ? "✅" : "⬜"}</span>
-        <span style="color:${color}; font-weight:700;">
+        <span style="color:${color}; font-weight:800; ${task.done ? "text-decoration:line-through;" : ""}">
           ${task.text}
         </span>
       </li>
@@ -284,6 +287,12 @@ function renderGoals() {
   `).join("");
 }
 
+function updateCategorySelectColor() {
+  const select = document.getElementById("categoryInput");
+  select.className = "";
+  select.classList.add(`category-${select.value}`);
+}
+
 function prevMonth() {
   currentDate.setMonth(currentDate.getMonth() - 1);
   renderCalendar();
@@ -298,7 +307,9 @@ document.getElementById("dueDate").value = getTodayText();
 document.getElementById("memoInput").value = memo;
 
 document.getElementById("memoInput").addEventListener("input", saveData);
+document.getElementById("categoryInput").addEventListener("change", updateCategorySelectColor);
 
+updateCategorySelectColor();
 rolloverUndoneTasks();
 renderCalendar();
 
