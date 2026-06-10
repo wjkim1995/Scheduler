@@ -271,6 +271,55 @@ body {
   box-shadow: 0 10px 24px rgba(0,0,0,0.05);
 }
 
+#categoryInput {
+  font-weight: 800;
+}
+
+select.category-work {
+  color: #4f8dff;
+}
+
+select.category-daily {
+  color: #ff7a45;
+}
+
+select.category-health {
+  color: #4caf50;
+}
+
+select.category-study {
+  color: #8b5cf6;
+}
+
+select.category-etc {
+  color: #ffb300;
+}
+
+#categoryInput option[value="work"] {
+  color: #4f8dff;
+  font-weight: 800;
+}
+
+#categoryInput option[value="daily"] {
+  color: #ff7a45;
+  font-weight: 800;
+}
+
+#categoryInput option[value="health"] {
+  color: #4caf50;
+  font-weight: 800;
+}
+
+#categoryInput option[value="study"] {
+  color: #8b5cf6;
+  font-weight: 800;
+}
+
+#categoryInput option[value="etc"] {
+  color: #ffb300;
+  font-weight: 800;
+}
+
 .weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -300,7 +349,7 @@ body {
   cursor: pointer;
   transition: 0.2s;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .day:hover {
@@ -377,61 +426,17 @@ body {
   flex: none;
 }
 
-.work .task-dot {
-  background: #4f8dff;
-}
-
-.daily .task-dot {
-  background: #ff7a45;
-}
-
-.health .task-dot {
-  background: #4caf50;
-}
-
-.study .task-dot {
-  background: #8b5cf6;
-}
-
-.etc .task-dot {
-  background: #ffb300;
-}
-
-.task-item.work span {
-  color: #4f8dff;
-  font-weight: 700;
-}
-
-.task-item.daily span {
-  color: #ff7a45;
-  font-weight: 700;
-}
-
-.task-item.health span {
-  color: #4caf50;
-  font-weight: 700;
-}
-
-.task-item.study span {
-  color: #8b5cf6;
-  font-weight: 700;
-}
-
-.task-item.etc span {
-  color: #ffb300;
-  font-weight: 700;
-}
-
 .task-item input {
   display: none;
 }
 
 .task-item span {
   cursor: pointer;
+  font-weight: 800;
 }
 
 .task-item.done span {
-  color: #999;
+  color: #999 !important;
   text-decoration: line-through;
   font-weight: 600;
 }
@@ -440,7 +445,7 @@ body {
   margin-top: 4px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -448,6 +453,7 @@ body {
   color: #111;
   text-decoration: underline;
 }
+
 @media (max-width: 1050px) {
   body {
     padding: 16px;
