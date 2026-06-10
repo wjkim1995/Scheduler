@@ -7,53 +7,93 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="planner">
+  <div class="app">
     <aside class="sidebar">
-      <h2 id="monthTitle">2026년 6월</h2>
-
-      <div class="goal-box">
-        <div class="black-title">WEEKS GOAL</div>
-        <input id="goalInput" placeholder="이번 달 목표를 입력하세요" />
-        <button onclick="addGoal()">목표 추가</button>
-        <ul id="goalList"></ul>
+      <div class="profile-card">
+        <div class="avatar">M</div>
+        <div>
+          <p class="hello">Hello, Minjung</p>
+          <h2 id="monthTitle">2026년 6월</h2>
+        </div>
       </div>
+
+      <section class="side-section">
+        <div class="section-title">TODAY</div>
+        <div class="today-progress">
+          <strong id="todayRate">0%</strong>
+          <span>오늘 완료율</span>
+        </div>
+        <div class="mini-progress">
+          <div id="todayProgressFill"></div>
+        </div>
+        <ul id="todayList" class="today-list"></ul>
+      </section>
+
+      <section class="side-section">
+        <div class="section-title">MONTH GOALS</div>
+        <div class="goal-form">
+          <input id="goalInput" placeholder="이번 달 목표 입력" />
+          <button onclick="addGoal()">+</button>
+        </div>
+        <ul id="goalList" class="goal-list"></ul>
+      </section>
+
+      <section class="side-section memo-box">
+        <div class="section-title">MEMO</div>
+        <textarea id="memoInput" placeholder="이번 달 메모를 남겨보세요"></textarea>
+      </section>
     </aside>
 
-    <main class="calendar-wrap">
+    <main class="main">
       <header class="top">
-        <button onclick="prevMonth()">◀</button>
-        <h1>📅 My Scheduler</h1>
-        <button onclick="nextMonth()">▶</button>
+        <button class="nav-btn" onclick="prevMonth()">‹</button>
+        <div>
+          <p class="sub-title">Monthly Planner</p>
+          <h1>📅 My Scheduler</h1>
+        </div>
+        <button class="nav-btn" onclick="nextMonth()">›</button>
       </header>
 
       <section class="dashboard">
-        <div>
-          <span>Total daily completion rate</span>
+        <div class="dash-card point">
+          <span>Progress</span>
           <strong id="rate">0%</strong>
         </div>
-        <div>
-          <span>이번달 할 일 🔥</span>
+        <div class="dash-card">
+          <span>Total Tasks</span>
           <strong id="totalCount">0</strong>
         </div>
-        <div>
-          <span>완료 👍</span>
+        <div class="dash-card">
+          <span>Done</span>
           <strong id="doneCount">0</strong>
         </div>
-        <div>
-          <span>미완료 😭</span>
+        <div class="dash-card">
+          <span>Remain</span>
           <strong id="undoneCount">0</strong>
         </div>
       </section>
 
-      <section class="add-task">
+      <section class="add-task-card">
         <input type="text" id="taskInput" placeholder="할 일을 입력하세요" />
         <input type="date" id="dueDate" />
-        <button onclick="addTask()">추가</button>
+        <select id="categoryInput">
+          <option value="work">🏥 Work</option>
+          <option value="daily">🏠 Daily</option>
+          <option value="health">💪 Health</option>
+          <option value="study">📚 Study</option>
+          <option value="etc">✨ Etc</option>
+        </select>
+        <button onclick="addTask()">Add Task</button>
       </section>
 
       <div class="weekdays">
-        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div>
-        <div>THU</div><div>FRI</div><div>SAT</div>
+        <div>SUN</div>
+        <div>MON</div>
+        <div>TUE</div>
+        <div>WED</div>
+        <div>THU</div>
+        <div>FRI</div>
+        <div>SAT</div>
       </div>
 
       <div id="calendar" class="calendar"></div>
