@@ -8,11 +8,11 @@ let expandedDates = new Set();
 const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 const categoryColors = {
-  work: "#4f8dff",
-  daily: "#ff7a45",
-  health: "#4caf50",
-  study: "#8b5cf6",
-  etc: "#ffb300"
+  과제 이름: "#4f8dff",
+  할 일: "#ff7a45",
+  일정: "#4caf50",
+  회사: "#8b5cf6",
+  외근: "#ffb300"
 };
 
 function saveData() {
