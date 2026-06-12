@@ -496,3 +496,134 @@ select.category-etc {
     display: none;
   }
 }
+
+/* editable scheduler additions */
+.editable {
+  outline: none;
+  border-radius: 8px;
+  padding: 2px 4px;
+}
+.editable:focus {
+  background: #fff2a8;
+  box-shadow: 0 0 0 2px rgba(17,17,17,0.12);
+}
+.hint {
+  margin: -8px 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.task-item {
+  position: relative;
+}
+.task-text {
+  flex: 1;
+}
+.task-actions,
+.goal-actions {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 4px;
+}
+.icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 1px 2px;
+}
+.goal-list li {
+  cursor: pointer;
+}
+
+/* clean fix: keep edit/delete tools subtle */
+.hint {
+  margin: 4px 0 18px;
+  font-size: 12px;
+  color: #9a9388;
+  font-weight: 600;
+}
+
+.task-list {
+  position: relative;
+}
+
+.task-item {
+  min-height: 20px;
+  padding: 2px 4px 2px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.task-item:hover {
+  background: rgba(255, 216, 77, 0.16);
+}
+
+.task-text {
+  display: block;
+  min-width: 0;
+  max-width: calc(100% - 18px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-actions,
+.goal-actions {
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.15s;
+}
+
+.task-item:hover .task-actions,
+.goal-list li:hover .goal-actions {
+  opacity: 1;
+  visibility: visible;
+}
+
+.task-actions {
+  position: absolute;
+  right: 4px;
+  background: rgba(255, 253, 248, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 3px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.icon-btn {
+  width: 18px;
+  height: 18px;
+  border: 0 !important;
+  border-radius: 999px;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 !important;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  appearance: none;
+}
+
+.icon-btn:hover {
+  background: #fff2a8 !important;
+  transform: none !important;
+}
+
+.goal-list li {
+  position: relative;
+}
+
+.goal-actions {
+  position: absolute;
+  right: 0;
+  background: rgba(255,255,255,0.96);
+  border-radius: 999px;
+}
+
+.day {
+  min-height: 146px;
+}
