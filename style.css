@@ -82,11 +82,11 @@ body {
     font-size: 13px;
 }
 
-.box strong {
+.today-rate strong {
     font-size: 34px;
 }
 
-.box span {
+.today-rate span {
     color: #888;
     font-size: 13px;
 }
@@ -130,6 +130,10 @@ button {
     color: white;
     font-weight: 800;
     cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
 }
 
 .main {
@@ -225,7 +229,7 @@ button {
 }
 
 .day.empty {
-    background: rgba(255,255,255,0.4);
+    background: rgba(255, 255, 255, 0.4);
     cursor: default;
 }
 
@@ -288,6 +292,7 @@ button {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: pointer;
 }
 
 .task.done span {
@@ -295,32 +300,13 @@ button {
     text-decoration: line-through;
 }
 
-.category-병원 {
-    color: #4f8dff;
-    background: #eef4ff;
-}
-
-.category-회사 {
-    color: #8b5cf6;
-    background: #f4efff;
-}
-
-.category-외근 {
-    color: #ff7a45;
-    background: #fff0ea;
-}
-
-.category-할일 {
-    color: #555;
-    background: #f2f2f2;
-}
-
 .modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0, 0, 0, 0.35);
     display: grid;
     place-items: center;
+    z-index: 100;
 }
 
 .hidden {
@@ -332,6 +318,11 @@ button {
     background: #fffdf8;
     border-radius: 24px;
     padding: 24px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+}
+
+.modal-box h2 {
+    margin: 0 0 16px;
 }
 
 .modal-box input,
@@ -346,8 +337,52 @@ button {
     gap: 8px;
 }
 
+.modal-buttons.two {
+    grid-template-columns: 1fr 1fr;
+}
+
 .danger {
     background: #ef7777;
+}
+
+.category-modal-box {
+    width: 500px;
+}
+
+.category-list {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.category-row {
+    display: grid;
+    grid-template-columns: 1fr 55px 70px;
+    gap: 8px;
+    align-items: center;
+}
+
+.category-row input[type="text"] {
+    width: 100%;
+    margin: 0;
+}
+
+.category-row input[type="color"] {
+    width: 55px;
+    height: 46px;
+    padding: 4px;
+    margin: 0;
+}
+
+.category-row button {
+    background: #ef7777;
+    padding: 12px 8px;
+}
+
+.add-category-btn {
+    width: 100%;
+    margin-bottom: 14px;
+    background: #444;
 }
 
 @media (max-width: 900px) {
