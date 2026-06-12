@@ -3,91 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minjung Scheduler</title>
+  <title>민정이 스케줄러</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <div class="profile-card">
-        <div class="avatar editable" data-edit-key="avatar">M</div>
+        <button class="avatar" id="avatarText" type="button">M</button>
         <div>
-          <p class="hello editable" data-edit-key="hello">Hello, Minjung</p>
-          <h2 id="monthTitle">2026년 6월</h2>
+          <button class="plain-edit hello" data-label="hello" type="button">Hello, Minjung</button>
+          <h2 id="monthTitle"></h2>
         </div>
       </div>
 
       <section class="side-section">
-        <div class="section-title editable" data-edit-key="todayTitle">TODAY</div>
-        <div class="today-progress">
-          <strong id="todayRate">0%</strong>
-          <span class="editable" data-edit-key="todayRateText">오늘 완료율</span>
-        </div>
-        <div class="mini-progress">
-          <div id="todayProgressFill"></div>
-        </div>
+        <button class="section-title plain-edit" data-label="todayTitle" type="button">TODAY</button>
+        <div class="today-progress"><strong id="todayRate">0%</strong><button class="plain-edit muted" data-label="todayRateText" type="button">오늘 완료율</button></div>
+        <div class="mini-progress"><div id="todayProgressFill"></div></div>
         <ul id="todayList" class="today-list"></ul>
       </section>
 
       <section class="side-section">
-        <div class="section-title editable" data-edit-key="goalsTitle">MONTH GOALS</div>
+        <button class="section-title plain-edit" data-label="goalsTitle" type="button">MONTH GOALS</button>
         <div class="goal-form">
           <input id="goalInput" placeholder="이번 달 목표 입력" />
-          <button onclick="addGoal()">+</button>
+          <button id="addGoalBtn" type="button">+</button>
         </div>
         <ul id="goalList" class="goal-list"></ul>
       </section>
 
       <section class="side-section memo-box">
-        <div class="section-title editable" data-edit-key="memoTitle">MEMO</div>
+        <button class="section-title plain-edit" data-label="memoTitle" type="button">MEMO</button>
         <textarea id="memoInput" placeholder="이번 달 메모를 남겨보세요"></textarea>
       </section>
     </aside>
 
     <main class="main">
       <header class="top">
-        <button class="nav-btn" onclick="prevMonth()">‹</button>
-        <div>
-          <p class="sub-title editable" data-edit-key="plannerSubTitle">Monthly Planner</p>
-          <h1><span class="editable" data-edit-key="mainTitle">📅 민정이 스케줄러</span></h1>
+        <button class="nav-btn" id="prevBtn" type="button">‹</button>
+        <div class="title-wrap">
+          <button class="plain-edit sub-title" data-label="subTitle" type="button">Monthly Planner</button>
+          <button class="plain-edit main-title" data-label="mainTitle" type="button">📅 민정이 스케줄러</button>
         </div>
-        <button class="nav-btn" onclick="nextMonth()">›</button>
+        <button class="nav-btn" id="nextBtn" type="button">›</button>
       </header>
 
       <section class="dashboard">
-        <div class="dash-card point">
-          <span class="editable" data-edit-key="progressLabel">Progress</span>
-          <strong id="rate">0%</strong>
-        </div>
-        <div class="dash-card">
-          <span class="editable" data-edit-key="totalLabel">Total Tasks</span>
-          <strong id="totalCount">0</strong>
-        </div>
-        <div class="dash-card">
-          <span class="editable" data-edit-key="doneLabel">Done</span>
-          <strong id="doneCount">0</strong>
-        </div>
-        <div class="dash-card">
-          <span class="editable" data-edit-key="remainLabel">Remain</span>
-          <strong id="undoneCount">0</strong>
-        </div>
+        <div class="dash-card point"><button class="plain-edit muted" data-label="progressLabel" type="button">Progress</button><strong id="rate">0%</strong></div>
+        <div class="dash-card"><button class="plain-edit muted" data-label="totalLabel" type="button">Total Tasks</button><strong id="totalCount">0</strong></div>
+        <div class="dash-card"><button class="plain-edit muted" data-label="doneLabel" type="button">Done</button><strong id="doneCount">0</strong></div>
+        <div class="dash-card"><button class="plain-edit muted" data-label="remainLabel" type="button">Remain</button><strong id="undoneCount">0</strong></div>
       </section>
 
       <section class="add-task-card">
-        <input type="text" id="taskInput" placeholder="병원/업무/외근 내용을 입력하세요" />
+        <input type="text" id="taskInput" placeholder="예: 서울대병원 모니터링 / 중앙대 계약 확인" />
         <input type="date" id="dueDate" />
         <select id="categoryInput"></select>
-        <button onclick="addTask()">Add Task</button>
+        <button id="addTaskBtn" type="button">추가</button>
+        <button id="settingBtn" class="soft-btn" type="button">설정</button>
       </section>
-      <p class="hint">일정·목표는 클릭해서 완료, ✏️로 수정, 🗑️로 삭제 / 제목 글씨는 클릭 후 바로 수정 가능</p>
 
       <div class="weekdays">
         <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
       </div>
-
       <div id="calendar" class="calendar"></div>
     </main>
   </div>
+
+  <dialog id="taskDialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <h3>일정 수정</h3>
+      <label>내용<input id="editTaskText" /></label>
+      <label>날짜<input id="editTaskDate" type="date" /></label>
+      <label>구분<select id="editTaskCategory"></select></label>
+      <div class="check-line"><input id="editTaskDone" type="checkbox" /><span>완료 처리</span></div>
+      <div class="dialog-actions">
+        <button id="deleteTaskBtn" class="danger" type="button">삭제</button>
+        <span></span>
+        <button value="cancel" type="submit">닫기</button>
+        <button id="saveTaskBtn" class="primary" type="button">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" class="dialog-card wide">
+      <h3>설정</h3>
+      <p class="settings-help">카테고리와 화면 문구를 여기서 수정해요. 글씨가 줄바꿈되지 않도록 일정은 한 줄로 고정됩니다.</p>
+      <h4>카테고리</h4>
+      <div id="categoryEditor" class="category-editor"></div>
+      <button id="addCategoryBtn" class="soft-btn" type="button">+ 카테고리 추가</button>
+      <h4>화면 문구</h4>
+      <div id="labelEditor" class="label-editor"></div>
+      <div class="dialog-actions bottom">
+        <button id="resetBtn" class="danger" type="button">초기화</button>
+        <span></span>
+        <button value="cancel" type="submit">닫기</button>
+        <button id="saveSettingsBtn" class="primary" type="button">저장</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="script.js"></script>
 </body>
