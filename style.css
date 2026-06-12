@@ -82,11 +82,11 @@ body {
     font-size: 13px;
 }
 
-.rate strong {
+.box strong {
     font-size: 34px;
 }
 
-.rate span {
+.box span {
     color: #888;
     font-size: 13px;
 }
@@ -94,7 +94,7 @@ body {
 ul {
     list-style: none;
     padding: 0;
-    margin: 10px 0 0;
+    margin: 12px 0 0;
 }
 
 li {
@@ -191,7 +191,7 @@ button {
 
 .input-area {
     display: grid;
-    grid-template-columns: 1fr 160px 150px 100px;
+    grid-template-columns: 1fr 160px 150px 100px 90px;
     gap: 10px;
     padding: 14px;
     margin-bottom: 20px;
@@ -264,19 +264,34 @@ button {
 }
 
 .task {
-    display: block;
-    padding: 4px 6px;
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
     margin-bottom: 5px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 800;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-.task.done {
-    color: #aaa !important;
+.task input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.task span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.task.done span {
+    color: #aaa;
     text-decoration: line-through;
 }
 
