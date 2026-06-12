@@ -9,6 +9,13 @@ let categories = JSON.parse(localStorage.getItem("categories")) || [
     "할 일"
 ];
 
+let categoryColors = JSON.parse(localStorage.getItem("categoryColors")) || {
+    "병원": "#4f8dff",
+    "회사": "#8b5cf6",
+    "외근": "#ff7a45",
+    "할 일": "#555555"
+};
+
 let currentDate = new Date();
 let editingId = null;
 
@@ -19,10 +26,13 @@ const dateInput = document.getElementById("dateInput");
 const categoryInput = document.getElementById("categoryInput");
 const calendar = document.getElementById("calendar");
 
-const modal = document.getElementById("modal");
+const taskModal = document.getElementById("taskModal");
 const editText = document.getElementById("editText");
 const editDate = document.getElementById("editDate");
 const editCategory = document.getElementById("editCategory");
+
+const categoryModal = document.getElementById("categoryModal");
+const categoryList = document.getElementById("categoryList");
 
 dateInput.value = getTodayText();
 document.getElementById("memoInput").value = memo;
@@ -32,6 +42,7 @@ function saveData() {
     localStorage.setItem("goals", JSON.stringify(goals));
     localStorage.setItem("memo", document.getElementById("memoInput").value);
     localStorage.setItem("categories", JSON.stringify(categories));
+    localStorage.setItem("categoryColors", JSON.stringify(categoryColors));
 }
 
 function getTodayText() {
@@ -46,6 +57,14 @@ function getTodayText() {
 
 function formatDate(year, month, day) {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getCategoryColor(category) {
+    return categoryColors[category] || "#555555";
+}
+
+function getLightColor(hex) {
+    return hex + "20";
 }
 
 function renderCategories() {
@@ -66,28 +85,79 @@ function renderCategories() {
     });
 }
 
-function editCategories() {
-    const result = prompt(
-        "카테고리를 쉼표로 구분해서 입력하세요.",
-        categories.join(", ")
-    );
+function openCategoryModal() {
+    categoryList.innerHTML = "";
 
-    if (!result) {
+    categories.forEach(category => {
+        addCategoryRow(category, getCategoryColor(category));
+    });
+
+    categoryModal.classList.remove("hidden");
+}
+
+function addCategoryRow(name = "새 카테고리", color = "#555555") {
+    const row = document.createElement("div");
+    row.className = "category-row";
+
+    row.innerHTML = `
+        <input type="text" value="${name}">
+        <input type="color" value="${color}">
+        <button type="button">삭제</button>
+    `;
+
+    row.querySelector("button").addEventListener("click", function () {
+        row.remove();
+    });
+
+    categoryList.appendChild(row);
+}
+
+function saveCategories() {
+    const rows = document.querySelectorAll(".category-row");
+
+    const newCategories = [];
+    const newColors = {};
+
+    rows.forEach(row => {
+        const nameInput = row.querySelector('input[type="text"]');
+        const colorInput = row.querySelector('input[type="color"]');
+
+        const name = nameInput.value.trim();
+        const color = colorInput.value;
+
+        if (name !== "") {
+            newCategories.push(name);
+            newColors[name] = color;
+        }
+    });
+
+    if (newCategories.length === 0) {
+        alert("카테고리는 최소 1개 이상 필요합니다.");
         return;
     }
 
-    categories = result
-        .split(",")
-        .map(item => item.trim())
-        .filter(item => item !== "");
+    categories = newCategories;
+    categoryColors = newColors;
+
+    tasks = tasks.map(task => {
+        if (!categories.includes(task.category)) {
+            return {
+                ...task,
+                category: categories[0]
+            };
+        }
+
+        return task;
+    });
 
     saveData();
     renderCategories();
     renderCalendar();
+    closeCategoryModal();
 }
 
-function getCategoryClass(category) {
-    return "category-" + category.replaceAll(" ", "");
+function closeCategoryModal() {
+    categoryModal.classList.add("hidden");
 }
 
 function renderCalendar() {
@@ -142,7 +212,11 @@ function renderCalendar() {
         dayTasks.forEach(task => {
             const taskEl = document.createElement("div");
 
-            taskEl.className = `task ${getCategoryClass(task.category)}`;
+            const color = getCategoryColor(task.category);
+
+            taskEl.className = "task";
+            taskEl.style.color = color;
+            taskEl.style.backgroundColor = getLightColor(color);
 
             if (task.done) {
                 taskEl.classList.add("done");
@@ -157,15 +231,16 @@ function renderCalendar() {
             `;
 
             const checkbox = taskEl.querySelector("input");
+            const textSpan = taskEl.querySelector("span");
 
             checkbox.addEventListener("click", function (event) {
                 event.stopPropagation();
                 toggleDone(task.id);
             });
 
-            taskEl.querySelector("span").addEventListener("click", function (event) {
+            textSpan.addEventListener("click", function (event) {
                 event.stopPropagation();
-                openEditModal(task.id);
+                openTaskModal(task.id);
             });
 
             dayBox.appendChild(taskEl);
@@ -205,7 +280,7 @@ function addTask() {
     renderCalendar();
 }
 
-function openEditModal(id) {
+function openTaskModal(id) {
     const task = tasks.find(item => item.id === id);
 
     if (!task) {
@@ -218,10 +293,10 @@ function openEditModal(id) {
     editDate.value = task.date;
     editCategory.value = task.category;
 
-    modal.classList.remove("hidden");
+    taskModal.classList.remove("hidden");
 }
 
-function saveEdit() {
+function saveTask() {
     const newText = editText.value.trim();
 
     if (newText === "") {
@@ -243,7 +318,7 @@ function saveEdit() {
     });
 
     saveData();
-    closeModal();
+    closeTaskModal();
     renderCalendar();
 }
 
@@ -251,12 +326,12 @@ function deleteTask() {
     tasks = tasks.filter(task => task.id !== editingId);
 
     saveData();
-    closeModal();
+    closeTaskModal();
     renderCalendar();
 }
 
-function closeModal() {
-    modal.classList.add("hidden");
+function closeTaskModal() {
+    taskModal.classList.add("hidden");
     editingId = null;
 }
 
@@ -302,7 +377,6 @@ function renderDashboard() {
 
 function renderToday() {
     const today = getTodayText();
-
     const todayTasks = tasks.filter(task => task.date === today);
 
     const total = todayTasks.length;
@@ -391,13 +465,18 @@ document.getElementById("nextBtn").addEventListener("click", function () {
     renderCalendar();
 });
 
-document.getElementById("categoryBtn").addEventListener("click", editCategories);
+document.getElementById("categoryBtn").addEventListener("click", openCategoryModal);
+document.getElementById("addCategoryBtn").addEventListener("click", function () {
+    addCategoryRow();
+});
+document.getElementById("saveCategoryBtn").addEventListener("click", saveCategories);
+document.getElementById("closeCategoryBtn").addEventListener("click", closeCategoryModal);
 
-document.getElementById("saveBtn").addEventListener("click", saveEdit);
-document.getElementById("deleteBtn").addEventListener("click", deleteTask);
-document.getElementById("closeBtn").addEventListener("click", closeModal);
+document.getElementById("saveTaskBtn").addEventListener("click", saveTask);
+document.getElementById("deleteTaskBtn").addEventListener("click", deleteTask);
+document.getElementById("closeTaskBtn").addEventListener("click", closeTaskModal);
+
 document.getElementById("addGoalBtn").addEventListener("click", addGoal);
-
 document.getElementById("memoInput").addEventListener("input", saveData);
 
 renderCategories();
