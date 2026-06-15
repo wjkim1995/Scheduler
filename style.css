@@ -585,3 +585,125 @@ body {
 .selected-day-box .sidebar-group {
     background: rgba(255,255,255,.72);
 }
+
+/* v12 responsive fix: keep the input bar neat without cutting off */
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.app {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    grid-template-columns: 340px minmax(0, 1fr);
+}
+
+.main {
+    min-width: 0;
+    padding: 28px 30px 40px;
+}
+
+.sidebar {
+    min-width: 0;
+}
+
+.input-area {
+    width: 100%;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 155px 115px 120px 100px 85px;
+    gap: 10px;
+}
+
+.input-area > * {
+    min-width: 0;
+}
+
+.input-area button {
+    white-space: nowrap;
+}
+
+.dashboard {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.calendar,
+.weekdays {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.day {
+    min-width: 0;
+}
+
+@media (max-width: 1280px) {
+    .app {
+        grid-template-columns: 300px minmax(0, 1fr);
+    }
+
+    .main {
+        padding: 24px;
+    }
+
+    .input-area {
+        grid-template-columns: minmax(220px, 1fr) 145px 105px 115px;
+    }
+
+    #categoryBtn,
+    #addTaskBtn {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 1050px) {
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid #e7ded1;
+    }
+
+    .dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .input-area {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #taskInput {
+        grid-column: span 2;
+    }
+
+    #categoryBtn,
+    #addTaskBtn {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 700px) {
+    .main,
+    .sidebar {
+        padding: 18px;
+    }
+
+    .dashboard,
+    .input-area,
+    .calendar {
+        grid-template-columns: 1fr;
+    }
+
+    #taskInput,
+    #categoryBtn,
+    #addTaskBtn {
+        grid-column: auto;
+    }
+
+    .weekdays {
+        display: none;
+    }
+}
