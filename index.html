@@ -19,29 +19,29 @@
             </div>
         </div>
 
-        <section class="box">
+        <section class="box today-box">
             <h3>오늘 일정</h3>
-            <div class="today-rate">
-                <strong id="todayRate">0%</strong>
-                <span>오늘 완료율</span>
-            </div>
             <ul id="todayList"></ul>
-        </section>
-
-        <section class="box">
-            <h3>이번 달 목표</h3>
-
-            <div class="goal-form">
-                <input id="goalInput" placeholder="목표 입력">
-                <button id="addGoalBtn">+</button>
+            <div class="today-progress-footer">
+                <strong>오늘 완료율 <span id="todayRate">0%</span></strong>
+                <div class="today-progress"><div id="todayProgressFill"></div></div>
             </div>
-
-            <ul id="goalList"></ul>
         </section>
 
-        <section class="box">
-            <h3>메모</h3>
-            <textarea id="memoInput" placeholder="메모를 입력하세요"></textarea>
+        <section class="box legend-box">
+            <div class="box-title-row">
+                <h3>색상 안내</h3>
+                <button id="legendEditBtn" class="title-add-btn" title="카테고리 수정">✎</button>
+            </div>
+            <div id="legendList" class="legend-list"></div>
+        </section>
+
+        <section class="box selected-day-box">
+            <div class="box-title-row">
+                <h3 id="selectedDayTitle">선택한 날짜</h3>
+                <button id="selectedDayAddBtn" class="title-add-btn">+</button>
+            </div>
+            <div id="selectedDayList" class="selected-day-list"></div>
         </section>
 
     </aside>
@@ -82,8 +82,12 @@
         </section>
 
         <section class="input-area">
-            <input id="taskInput" placeholder="병원 / 회사 / 외근 일정 입력">
+            <input id="taskInput" placeholder="일정 또는 메모 입력">
             <input id="dateInput" type="date">
+            <select id="typeInput">
+                <option value="task">일정</option>
+                <option value="memo">메모</option>
+            </select>
             <select id="categoryInput"></select>
             <button id="categoryBtn">카테고리</button>
             <button id="addTaskBtn">추가</button>
@@ -112,6 +116,10 @@
 
         <input id="editText" placeholder="일정 내용">
         <input id="editDate" type="date">
+        <select id="editType">
+            <option value="task">일정</option>
+            <option value="memo">메모</option>
+        </select>
         <select id="editCategory"></select>
 
         <div class="modal-buttons">
