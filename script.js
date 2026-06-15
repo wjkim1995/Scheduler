@@ -1,22 +1,11 @@
 function safeParse(key, fallback) {
-    try {
-        const value = JSON.parse(localStorage.getItem(key));
-        return value ?? fallback;
-    } catch (error) {
-        return fallback;
-    }
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
 }
 
 const DEFAULT_CATEGORIES = ["병원", "회사", "외근", "개인"];
-const DEFAULT_COLORS = {
-    "병원": "#4f8dff",
-    "회사": "#8b5cf6",
-    "외근": "#ff7a45",
-    "개인": "#9ca3af"
-};
-
+const DEFAULT_COLORS = {"병원":"#4f8dff", "회사":"#8b5cf6", "외근":"#ff7a45", "개인":"#9ca3af"};
 let tasks = safeParse("tasks", []);
-let goals = safeParse("goals", []);
 let categories = safeParse("categories", DEFAULT_CATEGORIES);
 let categoryColors = safeParse("categoryColors", DEFAULT_COLORS);
 let currentDate = new Date();
@@ -24,225 +13,85 @@ let selectedDate = getTodayText();
 let editingId = null;
 
 const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-const $ = (id) => document.getElementById(id);
-
-const taskInput = $("taskInput");
-const dateInput = $("dateInput");
-const categoryInput = $("categoryInput");
-const typeInput = $("typeInput");
-const calendar = $("calendar");
-const taskModal = $("taskModal");
-const editText = $("editText");
-const editDate = $("editDate");
-const editCategory = $("editCategory");
-const editType = $("editType");
-const categoryModal = $("categoryModal");
-const categoryList = $("categoryList");
-
-function normalizeData() {
-    if (!Array.isArray(tasks)) tasks = [];
-    if (!Array.isArray(goals)) goals = [];
-
-    // 예전 코드에서 카테고리가 객체 배열로 저장되었거나 비어 있는 경우까지 방어
-    if (!Array.isArray(categories) || categories.length === 0) {
-        categories = [...DEFAULT_CATEGORIES];
-    }
-
-    categories = categories
-        .map(item => {
-            if (typeof item === "string") return item.trim();
-            if (item && typeof item === "object") return String(item.name || item.category || item.text || "").trim();
-            return "";
-        })
-        .map(name => name === "할 일" || name === "메모" ? "개인" : name)
-        .filter(Boolean);
-
-    categories = [...new Set(categories)].filter(name => name !== "할 일" && name !== "메모");
-    if (categories.length === 0) categories = [...DEFAULT_CATEGORIES];
-
-    if (!categoryColors || typeof categoryColors !== "object" || Array.isArray(categoryColors)) {
-        categoryColors = {};
-    }
-    if (!categoryColors["개인"] && categoryColors["할 일"]) {
-        categoryColors["개인"] = categoryColors["할 일"];
-    }
-    delete categoryColors["할 일"];
-    delete categoryColors["메모"];
-
-    categories.forEach(category => {
-        if (!categoryColors[category]) {
-            categoryColors[category] = DEFAULT_COLORS[category] || "#555555";
-        }
-    });
-
-    tasks = tasks
-        .filter(task => task && task.text && task.date)
-        .map(task => ({
-            id: task.id || Date.now() + Math.random(),
-            text: String(task.text),
-            date: task.date,
-            category: categories.includes(task.category) ? task.category : (task.category === "할 일" || task.category === "메모" ? "개인" : categories[0]),
-            type: task.type === "memo" ? "memo" : "task",
-            done: Boolean(task.done)
-        }));
-}
-
-function saveData() {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-    localStorage.setItem("goals", JSON.stringify(goals));
-    localStorage.setItem("categories", JSON.stringify(categories));
-    localStorage.setItem("categoryColors", JSON.stringify(categoryColors));
-}
+const $ = id => document.getElementById(id);
 
 function getTodayText() {
     const now = new Date();
     return formatDate(now.getFullYear(), now.getMonth(), now.getDate());
 }
-
 function formatDate(year, month, day) {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
+function formatDateLabel(dateText) {
+    const date = new Date(`${dateText}T00:00:00`);
+    return `${date.getMonth() + 1}/${date.getDate()} ${dayNames[date.getDay()]}`;
+}
+function escapeHtml(value) {
+    return String(value).replace(/[&<>\"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[char]));
+}
+function getCategoryColor(category) { return categoryColors[category] || "#555555"; }
 
+function normalizeData() {
+    if (!Array.isArray(tasks)) tasks = [];
+    if (!Array.isArray(categories) || categories.length === 0) categories = [...DEFAULT_CATEGORIES];
+    categories = [...new Set(categories.map(item => typeof item === "string" ? item.trim() : String(item?.name || "").trim()).filter(Boolean))];
+    categoryColors = (!categoryColors || typeof categoryColors !== "object" || Array.isArray(categoryColors)) ? {} : categoryColors;
+    categories.forEach(c => { if (!categoryColors[c]) categoryColors[c] = DEFAULT_COLORS[c] || "#555555"; });
+    tasks = tasks.filter(t => t && t.text && t.date).map(t => ({
+        id: t.id || Date.now() + Math.random(),
+        text: String(t.text),
+        date: t.date,
+        category: categories.includes(t.category) ? t.category : categories[0],
+        type: t.type === "memo" ? "memo" : "task",
+        done: Boolean(t.done),
+        completedAt: t.done ? (t.completedAt || getTodayText()) : null
+    }));
+}
+function saveData() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    localStorage.setItem("categories", JSON.stringify(categories));
+    localStorage.setItem("categoryColors", JSON.stringify(categoryColors));
+}
 function rollOverUnfinishedTasks() {
     const today = getTodayText();
-    const lastRolloverDate = localStorage.getItem("lastRolloverDate");
-
-    if (lastRolloverDate === today) return;
-
-    tasks = tasks.map(task => {
-        const isOverdueTask = task.type !== "memo" && !task.done && task.date < today;
-        return isOverdueTask ? { ...task, date: today } : task;
-    });
-
+    if (localStorage.getItem("lastRolloverDate") === today) return;
+    tasks = tasks.map(task => task.type !== "memo" && !task.done && task.date < today ? {...task, date: today} : task);
     localStorage.setItem("lastRolloverDate", today);
 }
 
-function getCategoryColor(category) {
-    return categoryColors[category] || "#555555";
-}
-
-function getLightColor(hex) {
-    return /^#[0-9a-fA-F]{6}$/.test(hex) ? `${hex}20` : "#eeeeee";
-}
-
 function renderCategories() {
-    categoryInput.innerHTML = "";
-    editCategory.innerHTML = "";
-
+    $("categoryInput").innerHTML = "";
+    $("editCategory").innerHTML = "";
     categories.forEach(category => {
-        const option1 = document.createElement("option");
-        option1.value = category;
-        option1.textContent = category;
-
-        const option2 = document.createElement("option");
-        option2.value = category;
-        option2.textContent = category;
-
-        categoryInput.appendChild(option1);
-        editCategory.appendChild(option2);
+        const a = new Option(category, category);
+        const b = new Option(category, category);
+        $("categoryInput").appendChild(a);
+        $("editCategory").appendChild(b);
     });
 }
-
-function openCategoryModal() {
-    categoryList.innerHTML = "";
-    categories.forEach(category => addCategoryRow(category, getCategoryColor(category)));
-    categoryModal.classList.remove("hidden");
-}
-
-function escapeHtml(value) {
-    return String(value).replace(/[&<>"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[char]));
-}
-
-function addCategoryRow(name = "새 카테고리", color = "#555555") {
-    const row = document.createElement("div");
-    row.className = "category-row";
-    row.innerHTML = `
-        <input type="text" value="${escapeHtml(name)}">
-        <input type="color" value="${color}">
-        <button type="button">삭제</button>
-    `;
-    row.querySelector("button").addEventListener("click", () => row.remove());
-    categoryList.appendChild(row);
-}
-
-function saveCategories() {
-    const rows = document.querySelectorAll(".category-row");
-    const newCategories = [];
-    const newColors = {};
-
-    rows.forEach(row => {
-        const name = row.querySelector('input[type="text"]').value.trim();
-        const color = row.querySelector('input[type="color"]').value;
-        if (name && !newCategories.includes(name)) {
-            newCategories.push(name);
-            newColors[name] = color;
-        }
+function renderLegend() {
+    const list = $("legendList");
+    list.innerHTML = "";
+    categories.forEach(category => {
+        const row = document.createElement("div");
+        row.className = "legend-row";
+        row.innerHTML = `<span class="legend-dot" style="background:${getCategoryColor(category)}"></span><span>${escapeHtml(category)}</span><span class="legend-chip">일정</span>`;
+        list.appendChild(row);
     });
-
-    if (newCategories.length === 0) {
-        alert("카테고리는 최소 1개 이상 필요합니다.");
-        return;
-    }
-
-    categories = newCategories;
-    categoryColors = newColors;
-    tasks = tasks.map(task => categories.includes(task.category) ? task : { ...task, category: categories[0] });
-
-    saveData();
-    renderCategories();
-    renderLegend();
-    renderCalendar();
-    closeCategoryModal();
-}
-
-function closeCategoryModal() {
-    categoryModal.classList.add("hidden");
 }
 
 function createCalendarItem(task) {
-    const taskEl = document.createElement("div");
-    const color = getCategoryColor(task.category);
-    taskEl.className = task.type === "memo" ? "task memo" : (task.done ? "task done" : "task");
-
-    if (task.type === "memo") {
-        taskEl.className = task.done ? "task memo done" : "task memo";
-        taskEl.innerHTML = `
-            <input type="checkbox" ${task.done ? "checked" : ""}>
-            <span class="task-dot" style="background:${color}"></span>
-            <span>${escapeHtml(task.text)}</span>
-        `;
-        taskEl.querySelector("input").addEventListener("click", event => {
-            event.stopPropagation();
-            toggleDone(task.id);
-        });
-    } else {
-        taskEl.innerHTML = `
-            <input type="checkbox" ${task.done ? "checked" : ""}>
-            <span class="task-dot" style="background:${color}"></span>
-            <span>${escapeHtml(task.text)}</span>
-        `;
-        taskEl.querySelector("input").addEventListener("click", event => {
-            event.stopPropagation();
-            toggleDone(task.id);
-        });
-    }
-
-    taskEl.querySelector("span:last-child").addEventListener("click", event => {
-        event.stopPropagation();
-        openTaskModal(task.id);
-    });
-
-    return taskEl;
+    const item = document.createElement("div");
+    item.className = task.done ? "task calendar-task done" : "task calendar-task";
+    item.innerHTML = `<span class="task-dot" style="background:${getCategoryColor(task.category)}"></span><span>${escapeHtml(task.text)}</span>`;
+    item.querySelector("span:last-child").addEventListener("click", e => { e.stopPropagation(); openTaskModal(task.id); });
+    return item;
 }
-
 function renderCalendar() {
+    const calendar = $("calendar");
     calendar.innerHTML = "";
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-
-    $("monthTitle").textContent = `${year}년 ${month + 1}월`;
-
     const firstDay = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
 
@@ -251,423 +100,209 @@ function renderCalendar() {
         empty.className = "day empty";
         calendar.appendChild(empty);
     }
-
     for (let day = 1; day <= lastDate; day++) {
         const dateText = formatDate(year, month, day);
         const dayDate = new Date(year, month, day);
-        const dayTasks = tasks.filter(task => task.date === dateText);
-        const checkableTasks = dayTasks.filter(task => task.type !== "memo");
-        const total = checkableTasks.length;
-        const done = checkableTasks.filter(task => task.done).length;
-        const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-
+        const schedules = tasks.filter(t => t.date === dateText && t.type !== "memo");
         const dayBox = document.createElement("div");
         dayBox.className = "day";
         if (dateText === getTodayText()) dayBox.classList.add("today");
         if (dateText === selectedDate) dayBox.classList.add("selected");
-
-        dayBox.innerHTML = `
-            <div class="date-head">
-                <span class="date-num">${day}</span>
-                <span class="day-name">${dayNames[dayDate.getDay()]}</span>
-            </div>
-            <div class="progress"><div class="progress-fill" style="width:${percent}%"></div></div>
-        `;
-
-        dayBox.addEventListener("click", () => {
-            selectedDate = dateText;
-            dateInput.value = dateText;
-            renderCalendar();
-        });
-
-        const memos = dayTasks.filter(task => task.type === "memo");
-        const schedules = dayTasks.filter(task => task.type !== "memo");
-
-        if (memos.length > 0) {
-            const memoTitle = document.createElement("div");
-            memoTitle.className = "day-section-title memo-title";
-            memoTitle.textContent = "메모";
-            dayBox.appendChild(memoTitle);
-        }
-
-        memos.forEach(task => {
-            const taskEl = createCalendarItem(task);
-            dayBox.appendChild(taskEl);
-        });
-
-        if (schedules.length > 0) {
-            const scheduleTitle = document.createElement("div");
-            scheduleTitle.className = "day-section-title schedule-title";
-            scheduleTitle.textContent = "일정";
-            dayBox.appendChild(scheduleTitle);
-        }
-
-        schedules.forEach(task => {
-            const taskEl = createCalendarItem(task);
-            dayBox.appendChild(taskEl);
-        });
-
+        dayBox.innerHTML = `<div class="date-head"><span class="date-num">${day}</span><span class="day-name">${dayNames[dayDate.getDay()]}</span></div>`;
+        dayBox.addEventListener("click", () => { selectedDate = dateText; $("dateInput").value = dateText; renderAll(); });
+        schedules.forEach(task => dayBox.appendChild(createCalendarItem(task)));
         calendar.appendChild(dayBox);
     }
-
     renderDashboard();
+}
+function renderDashboard() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const monthTasks = tasks.filter(t => {
+        const d = new Date(`${t.date}T00:00:00`);
+        return d.getFullYear() === year && d.getMonth() === month && t.type !== "memo";
+    });
+    const total = monthTasks.length;
+    const done = monthTasks.filter(t => t.done).length;
+    const rate = total ? Math.round(done / total * 100) : 0;
+    $("totalCount").textContent = total;
+    $("doneCount").textContent = done;
+    $("remainCount").textContent = total - done;
+    $("rate").textContent = `${rate}%`;
+}
+
+function createTodoRow(task) {
+    const row = document.createElement("li");
+    row.className = "todo-row";
+    row.innerHTML = `<input type="checkbox"><span class="item-dot" style="background:${getCategoryColor(task.category)}"></span><span>${escapeHtml(task.text)}</span>`;
+    row.querySelector("input").addEventListener("change", () => toggleDone(task.id));
+    row.querySelector("span:last-child").addEventListener("click", () => openTaskModal(task.id));
+    return row;
+}
+function createDoneRow(task) {
+    const row = document.createElement("li");
+    row.className = "done-row";
+    row.innerHTML = `<span class="done-mark">✓</span><span class="item-dot" style="background:${getCategoryColor(task.category)}"></span><span>${escapeHtml(task.text)}</span><button type="button" title="되돌리기">↺</button>`;
+    row.querySelector("span:nth-of-type(3)").addEventListener("click", () => openTaskModal(task.id));
+    row.querySelector("button").addEventListener("click", () => toggleDone(task.id));
+    return row;
+}
+function appendTodoSection(list, title, items) {
+    const head = document.createElement("li");
+    head.className = "todo-section";
+    head.textContent = title;
+    list.appendChild(head);
+    if (!items.length) {
+        const empty = document.createElement("li");
+        empty.className = "todo-empty";
+        empty.textContent = "미완료 항목이 없어요";
+        list.appendChild(empty);
+        return;
+    }
+    items.forEach(t => list.appendChild(createTodoRow(t)));
+}
+function renderToday() {
+    const today = getTodayText();
+    $("todoDateTitle").textContent = `${formatDateLabel(today)} 기준`;
+    const todayItems = tasks.filter(t => t.date === today && !t.done);
+    const memos = todayItems.filter(t => t.type === "memo");
+    const schedules = todayItems.filter(t => t.type !== "memo");
+    const list = $("todayList");
+    list.innerHTML = "";
+    appendTodoSection(list, "메모", memos);
+    appendTodoSection(list, "일정", schedules);
+
+    const todaySchedules = tasks.filter(t => t.date === today && t.type !== "memo");
+    const done = todaySchedules.filter(t => t.done).length;
+    const rate = todaySchedules.length ? Math.round(done / todaySchedules.length * 100) : 0;
+    $("todayRate").textContent = `${rate}% (${done} / ${todaySchedules.length})`;
+    $("todayProgressFill").style.width = `${rate}%`;
+}
+function renderCompleted() {
+    const today = getTodayText();
+    const completed = tasks.filter(t => t.done && (t.completedAt || t.date) === today);
+    $("completedCount").textContent = completed.length;
+    const list = $("completedList");
+    list.innerHTML = "";
+    if (!completed.length) {
+        list.innerHTML = `<li class="completed-empty">오늘 완료한 항목이 없어요</li>`;
+        return;
+    }
+    completed.forEach(t => list.appendChild(createDoneRow(t)));
+}
+function renderSelectedDay() {
+    const title = $("selectedDayTitle");
+    const list = $("selectedDayList");
+    title.textContent = `${formatDateLabel(selectedDate)} 일정`;
+    const items = tasks.filter(t => t.date === selectedDate);
+    const memos = items.filter(t => t.type === "memo");
+    const schedules = items.filter(t => t.type !== "memo");
+    list.innerHTML = "";
+    const makeGroup = (label, groupItems, empty) => {
+        const group = document.createElement("div");
+        group.className = "sidebar-group";
+        group.innerHTML = `<div class="detail-section-title">${label} (${groupItems.length})</div>`;
+        if (!groupItems.length) group.innerHTML += `<div class="detail-empty">${empty}</div>`;
+        groupItems.forEach(t => group.appendChild(createDoneRowForDetail(t)));
+        list.appendChild(group);
+    };
+    makeGroup("📝 메모", memos, "선택한 날짜의 메모가 없어요");
+    makeGroup("✅ 일정", schedules, "선택한 날짜의 일정이 없어요");
+}
+function createDoneRowForDetail(task) {
+    const row = document.createElement("div");
+    row.className = task.done ? "detail-item done" : "detail-item";
+    row.innerHTML = `<span class="item-dot" style="background:${getCategoryColor(task.category)}"></span><span>${escapeHtml(task.text)}</span><button type="button" title="삭제">🗑️</button>`;
+    row.querySelector("span:nth-of-type(2)").addEventListener("click", () => openTaskModal(task.id));
+    row.querySelector("button").addEventListener("click", () => deleteTaskById(task.id));
+    return row;
+}
+function renderAll() {
+    renderCalendar();
     renderToday();
+    renderCompleted();
     renderLegend();
     renderSelectedDay();
 }
 
 function addTask() {
-    const text = taskInput.value.trim();
-    const date = dateInput.value;
-    const category = categoryInput.value || categories[0];
-    const type = typeInput.value || "task";
-
-    if (!text || !date) {
-        alert("일정 내용과 날짜를 입력해주세요.");
-        return;
-    }
-
-    tasks.push({ id: Date.now(), text, date, category, type, done: false });
-    taskInput.value = "";
-    saveData();
-    renderCalendar();
+    const text = $("taskInput").value.trim();
+    const date = $("dateInput").value;
+    if (!text || !date) { alert("일정 내용과 날짜를 입력해주세요."); return; }
+    tasks.push({id: Date.now(), text, date, category: $("categoryInput").value || categories[0], type: $("typeInput").value || "task", done: false, completedAt: null});
+    $("taskInput").value = "";
+    saveData(); renderAll();
 }
-
+function toggleDone(id) {
+    tasks = tasks.map(t => t.id === id ? {...t, done: !t.done, completedAt: !t.done ? getTodayText() : null} : t);
+    saveData(); renderAll();
+}
+function deleteTaskById(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveData(); renderAll();
+}
 function openTaskModal(id) {
-    const task = tasks.find(item => item.id === id);
+    const task = tasks.find(t => t.id === id);
     if (!task) return;
     editingId = id;
-    editText.value = task.text;
-    editDate.value = task.date;
-    editType.value = task.type === "memo" ? "memo" : "task";
-    editCategory.value = categories.includes(task.category) ? task.category : categories[0];
-    taskModal.classList.remove("hidden");
+    $("editText").value = task.text;
+    $("editDate").value = task.date;
+    $("editType").value = task.type;
+    $("editCategory").value = task.category;
+    $("taskModal").classList.remove("hidden");
 }
-
+function closeTaskModal() { $("taskModal").classList.add("hidden"); editingId = null; }
 function saveTask() {
-    const newText = editText.value.trim();
-    if (!newText) {
-        alert("일정 내용을 입력해주세요.");
-        return;
-    }
-    tasks = tasks.map(task => task.id === editingId ? {
-        ...task,
-        text: newText,
-        date: editDate.value,
-        category: editCategory.value || categories[0],
-        type: editType.value || "task",
-        done: task.done
-    } : task);
-    saveData();
-    closeTaskModal();
-    renderCalendar();
+    const text = $("editText").value.trim();
+    if (!text) { alert("일정 내용을 입력해주세요."); return; }
+    tasks = tasks.map(t => t.id === editingId ? {...t, text, date: $("editDate").value, type: $("editType").value, category: $("editCategory").value} : t);
+    saveData(); closeTaskModal(); renderAll();
 }
+function deleteTask() { deleteTaskById(editingId); closeTaskModal(); }
 
-function deleteTaskById(id) {
-    tasks = tasks.filter(task => task.id !== id);
-    saveData();
-    renderCalendar();
+function openCategoryModal() {
+    const list = $("categoryList"); list.innerHTML = "";
+    categories.forEach(c => addCategoryRow(c, getCategoryColor(c)));
+    $("categoryModal").classList.remove("hidden");
 }
-
-function deleteTask() {
-    tasks = tasks.filter(task => task.id !== editingId);
-    saveData();
-    closeTaskModal();
-    renderCalendar();
-}
-
-function closeTaskModal() {
-    taskModal.classList.add("hidden");
-    editingId = null;
-}
-
-function toggleDone(id) {
-    tasks = tasks.map(task => task.id === id ? { ...task, done: !task.done } : task);
-    saveData();
-    renderCalendar();
-}
-
-function renderDashboard() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const monthTasks = tasks.filter(task => {
-        const taskDate = new Date(`${task.date}T00:00:00`);
-        return taskDate.getFullYear() === year && taskDate.getMonth() === month && task.type !== "memo";
-    });
-    const total = monthTasks.length;
-    const done = monthTasks.filter(task => task.done).length;
-    const remain = total - done;
-    const rate = total === 0 ? 0 : Math.round((done / total) * 100);
-
-    $("totalCount").textContent = total;
-    $("doneCount").textContent = done;
-    $("remainCount").textContent = remain;
-    $("rate").textContent = `${rate}%`;
-    renderMonthSummary(monthTasks);
-}
-
-function renderMonthSummary(monthSchedules) {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const monthMemos = tasks.filter(task => {
-        const taskDate = new Date(`${task.date}T00:00:00`);
-        return taskDate.getFullYear() === year && taskDate.getMonth() === month && task.type === "memo";
-    });
-    const todayRemain = tasks.filter(task => task.date === getTodayText() && task.type !== "memo" && !task.done).length;
-
-    const summaryTaskCount = $("summaryTaskCount");
-    const summaryMemoCount = $("summaryMemoCount");
-    const summaryTodayRemain = $("summaryTodayRemain");
-    if (summaryTaskCount) summaryTaskCount.textContent = monthSchedules.length;
-    if (summaryMemoCount) summaryMemoCount.textContent = monthMemos.length;
-    if (summaryTodayRemain) summaryTodayRemain.textContent = todayRemain;
-}
-
-function formatDateLabel(dateText) {
-    const date = new Date(`${dateText}T00:00:00`);
-    return `${date.getMonth() + 1}/${date.getDate()} ${dayNames[date.getDay()]}`;
-}
-
-function createSidebarDetailItem(task) {
+function closeCategoryModal() { $("categoryModal").classList.add("hidden"); }
+function addCategoryRow(name = "새 카테고리", color = "#555555") {
     const row = document.createElement("div");
-    const color = getCategoryColor(task.category);
-    row.className = task.type === "memo" ? "detail-item memo" : (task.done ? "detail-item done" : "detail-item");
-
-    if (task.type === "memo") {
-        row.className = task.done ? "detail-item memo done" : "detail-item memo";
-        row.innerHTML = `
-            <input type="checkbox" ${task.done ? "checked" : ""}>
-            <span class="item-dot" style="background:${color}"></span>
-            <span>${escapeHtml(task.text)}</span>
-            <button type="button" class="detail-delete" title="삭제">🗑️</button>
-        `;
-        row.querySelector("input").addEventListener("change", () => toggleDone(task.id));
-    } else {
-        row.innerHTML = `
-            <input type="checkbox" ${task.done ? "checked" : ""}>
-            <span class="item-dot" style="background:${color}"></span>
-            <span>${escapeHtml(task.text)}</span>
-            <button type="button" class="detail-delete" title="삭제">🗑️</button>
-        `;
-        row.querySelector("input").addEventListener("change", () => toggleDone(task.id));
-    }
-
-    row.querySelector("span:last-of-type").addEventListener("click", () => openTaskModal(task.id));
-    row.querySelector("button").addEventListener("click", () => deleteTaskById(task.id));
-    return row;
+    row.className = "category-row";
+    row.innerHTML = `<input type="text" value="${escapeHtml(name)}"><input type="color" value="${color}"><button type="button">삭제</button>`;
+    row.querySelector("button").addEventListener("click", () => row.remove());
+    $("categoryList").appendChild(row);
 }
-
-function renderSelectedDay() {
-    const title = $("selectedDayTitle");
-    const list = $("selectedDayList");
-    if (!title || !list) return;
-
-    const selectedItems = tasks.filter(task => task.date === selectedDate);
-    const memos = selectedItems.filter(task => task.type === "memo");
-    const schedules = selectedItems.filter(task => task.type !== "memo");
-
-    title.textContent = `${formatDateLabel(selectedDate)} 일정`;
-    list.innerHTML = "";
-
-    const addSection = (label, items, emptyText) => {
-        const group = document.createElement("div");
-        group.className = "sidebar-group detail-group";
-
-        const section = document.createElement("div");
-        section.className = "detail-section-title";
-        section.textContent = label;
-        group.appendChild(section);
-
-        if (items.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "detail-empty";
-            empty.textContent = emptyText;
-            group.appendChild(empty);
-            list.appendChild(group);
-            return;
-        }
-
-        items.forEach(item => group.appendChild(createSidebarDetailItem(item)));
-        list.appendChild(group);
-    };
-
-    addSection(`📝 메모 (${memos.length})`, memos, "선택한 날짜의 메모가 없어요");
-    addSection(`✅ 일정 (${schedules.length})`, schedules, "선택한 날짜의 일정이 없어요");
-}
-
-function appendTodaySection(list, title, items, emptyText, defaultType) {
-    const groupLi = document.createElement("li");
-    const group = document.createElement("div");
-    group.className = "sidebar-group today-group";
-
-    const titleRow = document.createElement("div");
-    titleRow.className = "today-section-title";
-    titleRow.innerHTML = `<span>${title}</span><button type="button" class="section-add-btn">+</button>`;
-    titleRow.querySelector("button").addEventListener("click", () => {
-        dateInput.value = getTodayText();
-        typeInput.value = defaultType;
-        taskInput.focus();
+function saveCategories() {
+    const newCategories = [], newColors = {};
+    document.querySelectorAll(".category-row").forEach(row => {
+        const name = row.querySelector('input[type="text"]').value.trim();
+        const color = row.querySelector('input[type="color"]').value;
+        if (name && !newCategories.includes(name)) { newCategories.push(name); newColors[name] = color; }
     });
-    group.appendChild(titleRow);
-
-    if (items.length === 0) {
-        const emptyLi = document.createElement("div");
-        emptyLi.className = "today-empty";
-        emptyLi.textContent = emptyText;
-        group.appendChild(emptyLi);
-        groupLi.appendChild(group);
-        list.appendChild(groupLi);
-        return;
-    }
-
-    items.forEach(task => {
-        const row = document.createElement("div");
-        const color = getCategoryColor(task.category);
-        row.className = task.type === "memo" ? "today-item memo" : (task.done ? "today-item done" : "today-item");
-
-        if (task.type === "memo") {
-            row.className = task.done ? "today-item memo done" : "today-item memo";
-        }
-        row.innerHTML = `
-            <input type="checkbox" ${task.done ? "checked" : ""}>
-            <span class="item-dot" style="background:${color}"></span>
-            <span>${escapeHtml(task.text)}</span>
-            <button type="button" class="today-delete" title="삭제">🗑️</button>
-        `;
-        row.querySelector("input").addEventListener("change", () => toggleDone(task.id));
-        row.querySelector("span:nth-of-type(2)").addEventListener("click", () => openTaskModal(task.id));
-        row.querySelector("button").addEventListener("click", () => deleteTaskById(task.id));
-        group.appendChild(row);
-    });
-
-    groupLi.appendChild(group);
-    list.appendChild(groupLi);
-}
-
-function renderToday() {
-    const todayTasks = tasks.filter(task => task.date === getTodayText());
-    const todayMemos = todayTasks.filter(task => task.type === "memo");
-    const todaySchedules = todayTasks.filter(task => task.type !== "memo");
-    const total = todaySchedules.length;
-    const done = todaySchedules.filter(task => task.done).length;
-    const rate = total === 0 ? 0 : Math.round((done / total) * 100);
-
-    $("todayRate").textContent = `${rate}% (${done} / ${total})`;
-    const todayProgressFill = $("todayProgressFill");
-    if (todayProgressFill) todayProgressFill.style.width = `${rate}%`;
-    const todayList = $("todayList");
-    todayList.innerHTML = "";
-
-    appendTodaySection(todayList, `📝 메모 (${todayMemos.length})`, todayMemos, "오늘 메모가 없어요", "memo");
-    appendTodaySection(todayList, `✅ 일정 (${todaySchedules.length})`, todaySchedules, "오늘 일정이 없어요", "task");
-}
-
-function addGoal() {
-    const input = $("goalInput");
-    const text = input.value.trim();
-    if (!text) return;
-    goals.push({ id: Date.now(), text, done: false });
-    input.value = "";
-    saveData();
-    renderGoals();
-}
-
-function editGoal(id) {
-    const goal = goals.find(item => item.id === id);
-    if (!goal) return;
-    const newText = prompt("목표를 수정하세요.", goal.text);
-    if (newText === null) return;
-    const trimmed = newText.trim();
-    if (!trimmed) return;
-    goal.text = trimmed;
-    saveData();
-    renderGoals();
-}
-
-function deleteGoal(id) {
-    goals = goals.filter(goal => goal.id !== id);
-    saveData();
-    renderGoals();
-}
-
-function renderGoals() {
-    const goalList = $("goalList");
-    goalList.innerHTML = "";
-    if (goals.length === 0) {
-        goalList.innerHTML = "<li>이번 달 목표를 추가해보세요</li>";
-        return;
-    }
-    const goalColors = ["#31c56a", "#b86add", "#ff9d2e", "#4f9cff", "#777777"];
-    goals.forEach((goal, index) => {
-        const li = document.createElement("li");
-        const row = document.createElement("div");
-        row.className = goal.done ? "goal-item done" : "goal-item";
-        const color = goalColors[index % goalColors.length];
-        row.innerHTML = `
-            <input type="checkbox" ${goal.done ? "checked" : ""}>
-            <span class="goal-dot" style="background:${color}"></span>
-            <span>${escapeHtml(goal.text)}</span>
-            <button type="button" class="goal-edit" title="수정">✎</button>
-            <button type="button" class="goal-delete" title="삭제">🗑️</button>
-        `;
-        row.querySelector(".goal-dot").addEventListener("click", () => {
-            goal.done = !goal.done;
-            saveData();
-            renderGoals();
-        });
-        row.querySelector("span:nth-of-type(2)").addEventListener("click", () => editGoal(goal.id));
-        row.querySelector(".goal-edit").addEventListener("click", () => editGoal(goal.id));
-        row.querySelector(".goal-delete").addEventListener("click", () => deleteGoal(goal.id));
-        li.appendChild(row);
-        goalList.appendChild(li);
-    });
-}
-
-function renderLegend() {
-    const legendList = $("legendList");
-    if (!legendList) return;
-    legendList.innerHTML = "";
-
-    categories.forEach(category => {
-        const row = document.createElement("div");
-        row.className = "legend-row";
-        const color = getCategoryColor(category);
-        row.innerHTML = `
-            <span class="legend-dot" style="background:${color}"></span>
-            <span>${escapeHtml(category)}</span>
-            <span class="legend-chip">일정</span>
-        `;
-        legendList.appendChild(row);
-    });
+    if (!newCategories.length) { alert("카테고리는 최소 1개 이상 필요합니다."); return; }
+    categories = newCategories;
+    categoryColors = newColors;
+    tasks = tasks.map(t => categories.includes(t.category) ? t : {...t, category: categories[0]});
+    saveData(); renderCategories(); closeCategoryModal(); renderAll();
 }
 
 function init() {
-    normalizeData();
-    rollOverUnfinishedTasks();
-    dateInput.value = selectedDate;
-
+    normalizeData(); rollOverUnfinishedTasks(); saveData();
+    $("dateInput").value = selectedDate;
     $("addTaskBtn").addEventListener("click", addTask);
-    taskInput.addEventListener("keydown", event => { if (event.key === "Enter") addTask(); });
-    $("prevBtn").addEventListener("click", () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
-    $("nextBtn").addEventListener("click", () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
+    $("taskInput").addEventListener("keydown", e => { if (e.key === "Enter") addTask(); });
+    $("prevBtn").addEventListener("click", () => { currentDate.setMonth(currentDate.getMonth() - 1); renderAll(); });
+    $("nextBtn").addEventListener("click", () => { currentDate.setMonth(currentDate.getMonth() + 1); renderAll(); });
     $("categoryBtn").addEventListener("click", openCategoryModal);
-    const selectedDayAddBtn = $("selectedDayAddBtn");
-    if (selectedDayAddBtn) selectedDayAddBtn.addEventListener("click", () => {
-        dateInput.value = selectedDate;
-        taskInput.focus();
-    });
+    $("legendEditBtn").addEventListener("click", openCategoryModal);
+    $("selectedDayAddBtn").addEventListener("click", () => { $("dateInput").value = selectedDate; $("taskInput").focus(); });
     $("addCategoryBtn").addEventListener("click", () => addCategoryRow());
     $("saveCategoryBtn").addEventListener("click", saveCategories);
     $("closeCategoryBtn").addEventListener("click", closeCategoryModal);
     $("saveTaskBtn").addEventListener("click", saveTask);
     $("deleteTaskBtn").addEventListener("click", deleteTask);
     $("closeTaskBtn").addEventListener("click", closeTaskModal);
-    const legendEditBtn = $("legendEditBtn");
-    if (legendEditBtn) legendEditBtn.addEventListener("click", openCategoryModal);
-
-    renderCategories();
-    saveData();
-    renderCalendar();
+    renderCategories(); renderAll();
 }
-
 init();
